@@ -198,3 +198,18 @@ resultado_DT=table(test_DT$y,predict_test_DT)
 print(resultado_DT)
 cat('Accuracy: ', sum(diag(resultado_DT))/sum(resultado_DT)*100, ' %')
 
+
+#******************************REGRESSAO LOGÍSTICA**************************
+#Utilizar mesmo conjunto de variáveis categóricas da árvore de decisão
+summary(bank_DS_DT)
+fit_reg=glm(y~.,data=train_DT,family=binomial("logit"))
+
+predict_reg = predict(fit_reg, newdata=test_DT, type="response")>0.5
+resultado_reg=table(test_DT$y,predict_reg)
+cat('Accuracy Regressão Logística: ', sum(diag(resultado_reg))/sum(resultado_reg)*100, ' %')
+
+
+#RESUMO DOS 3 MODELOS
+cat("Accuracy KNN k=35: ", acertos_k35, '%')
+cat('Accuracy Arvore de Decisão: ', sum(diag(resultado_DT))/sum(resultado_DT)*100, ' %')
+cat('Accuracy Regressão Logística: ', sum(diag(resultado_reg))/sum(resultado_reg)*100, ' %')
