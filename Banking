@@ -152,6 +152,49 @@ bank_DS_DT <- na.omit(bank_DS_DT)
 #Retirada variável duration: Esse atributo afeta muito a meta de saída (por exemplo, se duration = 0, então y = "no").
 bank_DS_DT <- bank_DS_DT[,-11]
 
-#Retirada das variáveis de contexto sócio econômicos?
 
 #Discretização de variáveis numéricas em categóricas para os modelos Árvore de Decisão e RandomForest
+# Variáveis numéricas: Age, campaing, pdays, previous, em.var.rate, cons.price.idx, cons.conf.idx,euribor3m,nr.employed
+
+summary(bank_DS_DT$age)
+age_discrete = cut(bank_DS_DT$age, 3, include.lowest = TRUE, labels = c("Jovem","Adulto","Idoso"))
+bank_DS_DT <-cbind(bank_DS_DT, age_discrete)
+
+summary(bank_DS_DT$campaign)
+campaing_discrete = cut(bank_DS_DT$campaign, 3, include.lowest = TRUE, labels = c("Pouco","Medio","Muito"))
+bank_DS_DT <-cbind(bank_DS_DT, campaing_discrete)
+
+#numeric; 999 means client was not previously contacted
+#Criada uma variável categória para contatado sim ou não
+table(bank_DS_DT$pdays)
+bank_DS_DT$contacted[bank_DS_DT$pdays == 999] <- "No"
+bank_DS_DT$contacted[bank_DS_DT$pdays != 999] <- "Yes"
+bank_DS_DT$contacted = factor(bank_DS_DT$contacted, levels = c("No","Yes"))
+pdays_discrete <- cut(bank_DS_DT$pdays, 4, include.lowest = TRUE, labels=c("Ate5","Ate15","NaoContatado"),breaks=c(5,15,27,999))
+bank_DS_DT <-cbind(bank_DS_DT, pdays_discrete)
+
+summary(bank_DS_DT$previous)
+previous_discrete = cut(bank_DS_DT$previous, 3, include.lowest = TRUE, labels = c("Pouco","Medio","Muito"))
+bank_DS_DT <-cbind(bank_DS_DT, previous_discrete)
+
+View(bank_DS_DT)
+#Retirada das variáveis de contexto sócio econômicos pois não seria possível colocar em levels
+bank_DS_DT <- bank_DS_DT[,-1]
+bank_DS_DT <- bank_DS_DT[,-(10:12)]
+bank_DS_DT <- bank_DS_DT[,-(11:15)]
+
+library(party)
+
+L_DT <- sample(1:nrow(bank_DS_DT),round(nrow(bank_DS_DT)/3))
+
+train_DT<- bank_DS_DT[-L_DT,]
+test_DT <- bank_DS_DT[L_DT,]
+
+fit_DT <- ctree(y ~., train_DT)
+
+predict_test_DT = predict(fit_DT, newdata=test_DT)
+
+resultado_DT=table(test_DT$y,predict_test_DT)
+print(resultado_DT)
+cat('Accuracy: ', sum(diag(resultado_DT))/sum(resultado_DT)*100, ' %')
+
