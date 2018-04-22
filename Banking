@@ -1,12 +1,16 @@
-# Sobre o que é 
 # Dados sobre Campanha de Marketing do Banco: bank-additional-full.csv 
 # com 41188 registros e 20 atributos, 
 # ordenados por data de Maio 2008 a Novembro 2010
 # Objetivo: Predizer se o cliente irá investir em depósito a termo 
-#(igual ao CDB - Certificado de Depósito, produto bancário para captação de recursos)
+# Depósito a termo semelhante ao CDB - Certificado de Depósito, produto bancário para captação de recursos)
 
 library(readr)
 library(dummies)
+library(class)
+set.seed(1984)
+
+#********************************KNN*****************************************
+
 bank_DS <-read.table("C:/Users/Lygia/Downloads/bank_dataset/bank-additional-full.csv",header=TRUE,sep=";", na = "unknown")
 #View(bank_DS)
 #nrow(bank_DS) # original 41188
@@ -24,6 +28,7 @@ bank_DS <- na.omit(bank_DS)
 
 #Retirada variável duration: Esse atributo afeta muito a meta de saída (por exemplo, se duration = 0, então y = "no").
 bank_DS <- bank_DS[,-11]
+#verificar a correlação
 
 #Retirada das variáveis de contexto sócio econômicos?
 
@@ -31,11 +36,122 @@ bank_DS <- bank_DS[,-11]
 
 #Transformação dos valores categóricos em numéricos para o caso do KNN
 bank_DS <- cbind(bank_DS,dummy(bank_DS$job))
-bank_DS <- bank_DS[,-2]
 bank_DS <- cbind(bank_DS,dummy(bank_DS$marital))
-bank_DS <- cbind(bank_DS,dummy(bank_DS$marital))
+bank_DS <- cbind(bank_DS,dummy(bank_DS$education))
+bank_DS <- cbind(bank_DS,dummy(bank_DS$default))
+bank_DS <- cbind(bank_DS,dummy(bank_DS$housing))
+bank_DS <- cbind(bank_DS,dummy(bank_DS$loan))
+bank_DS <- cbind(bank_DS,dummy(bank_DS$contact))
+bank_DS <- cbind(bank_DS,dummy(bank_DS$month))
+bank_DS <- cbind(bank_DS,dummy(bank_DS$day_of_week))
+bank_DS <- cbind(bank_DS,dummy(bank_DS$poutcome))
+View(bank_DS)
+#Retirada das variáveis originais categóricas
+bank_DS <- bank_DS[,-(2:10)]
+bank_DS <- bank_DS[,-5]
+#bank_DS <- bank_DS[,-(6:10)]
 View(bank_DS)
 
+#KNN K = 2
+L <- sample(1:nrow(bank_DS),round(nrow(bank_DS)/3))
+train <- bank_DS[-L,-10]
+test <- bank_DS[L,-10]
+test_y <-bank_DS[L,]
+cl <- factor(bank_DS[-L,10])
+fit_k2 <- knn(train, test, cl, k = 2)
+result_k2 = table(fit_k2,test_y$y)
+print(result_k2)
+acertos_k2 = (sum(diag(result_k2))/sum(result_k2)*100)
+cat("percentual de acerto: ", acertos_k2, '%')
 
+#KNN K = 3
+fit_k3 <- knn(train, test, cl, k = 3)
+result_k3 = table(fit_k3,test_y$y)
+print(result_k3)
+acertos_k3 = (sum(diag(result_k3))/sum(result_k3)*100)
 
+#KNN K = 4
+fit_k4 <- knn(train, test, cl, k = 4)
+result_k4 = table(fit_k4,test_y$y)
+print(result_k4)
+acertos_k4 = (sum(diag(result_k4))/sum(result_k4)*100)
 
+#KNN K = 5
+fit_k5 <- knn(train, test, cl, k = 5)
+result_k5 = table(fit_k5,test_y$y)
+print(result_k5)
+acertos_k5 = (sum(diag(result_k5))/sum(result_k5)*100)
+
+#KNN K = 7
+fit_k7 <- knn(train, test, cl, k = 7)
+result_k7 = table(fit_k7,test_y$y)
+print(result_k7)
+acertos_k7 = (sum(diag(result_k7))/sum(result_k7)*100)
+
+#KNN K = 10
+fit_k10 <- knn(train, test, cl, k = 10)
+result_k10 = table(fit_k10,test_y$y)
+print(result_k10)
+acertos_k10 = (sum(diag(result_k10))/sum(result_k10)*100)
+
+#KNN K = 15
+fit_k15 <- knn(train, test, cl, k = 15)
+result_k15 = table(fit_k15,test_y$y)
+print(result_k15)
+acertos_k15 = (sum(diag(result_k15))/sum(result_k15)*100)
+
+#KNN K = 30
+fit_k30 <- knn(train, test, cl, k = 30)
+result_k30 = table(fit_k30,test_y$y)
+print(result_k30)
+acertos_k30 = (sum(diag(result_k30))/sum(result_k30)*100)
+
+#KNN K = 35
+fit_k35 <- knn(train, test, cl, k = 35)
+result_k35 = table(fit_k35,test_y$y)
+print(result_k35)
+acertos_k35 = (sum(diag(result_k35))/sum(result_k35)*100)
+
+#KNN K = 45
+fit_k45 <- knn(train, test, cl, k = 45)
+result_k45 = table(fit_k45,test_y$y)
+print(result_k45)
+acertos_k45 = (sum(diag(result_k45))/sum(result_k45)*100)
+
+#KNN K = 50
+fit_k50 <- knn(train, test, cl, k = 50)
+result_k50 = table(fit_k50,test_y$y)
+print(result_k50)
+acertos_k50 = (sum(diag(result_k50))/sum(result_k50)*100)
+
+cat("percentual de acerto K=2: ", acertos_k2, '%')
+cat("percentual de acerto k=3: ", acertos_k3, '%')
+cat("percentual de acerto k=4: ", acertos_k4, '%')
+cat("percentual de acerto k=5: ", acertos_k5, '%')
+cat("percentual de acerto k=7: ", acertos_k7, '%')
+cat("percentual de acerto k=10: ", acertos_k10, '%')
+cat("percentual de acerto k=15: ", acertos_k15, '%')
+cat("percentual de acerto k=30: ", acertos_k30, '%')
+cat("percentual de acerto k=35: ", acertos_k35, '%')
+cat("percentual de acerto k=45: ", acertos_k45, '%')
+cat("percentual de acerto k=50: ", acertos_k50, '%')
+
+#******************************ARVORE DE DECISAO**************************
+
+bank_DS_DT <-read.table("C:/Users/Lygia/Downloads/bank_dataset/bank-additional-full.csv",header=TRUE,sep=";", na = "unknown")
+
+# Variáveis numéricas: Age, campaing, pdays, previous, em.var.rate, cons.price.idx, cons.conf.idx,euribor3m,nr.employed
+# Variáveis Categóricas: Job, Marital, education, default, housing,loan,contact, month, day_of_week, poutcome
+# Target: Y
+
+# Transformações 
+#NA = unknown retirados
+bank_DS_DT <- na.omit(bank_DS_DT)
+#nrow(bank_DS) #30488 restaram
+
+#Retirada variável duration: Esse atributo afeta muito a meta de saída (por exemplo, se duration = 0, então y = "no").
+bank_DS_DT <- bank_DS_DT[,-11]
+
+#Retirada das variáveis de contexto sócio econômicos?
+
+#Discretização de variáveis numéricas em categóricas para os modelos Árvore de Decisão e RandomForest
