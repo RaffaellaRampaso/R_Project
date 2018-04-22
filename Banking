@@ -1,0 +1,41 @@
+# Sobre o que é 
+# Dados sobre Campanha de Marketing do Banco: bank-additional-full.csv 
+# com 41188 registros e 20 atributos, 
+# ordenados por data de Maio 2008 a Novembro 2010
+# Objetivo: Predizer se o cliente irá investir em depósito a termo 
+#(igual ao CDB - Certificado de Depósito, produto bancário para captação de recursos)
+
+library(readr)
+library(dummies)
+bank_DS <-read.table("C:/Users/Lygia/Downloads/bank_dataset/bank-additional-full.csv",header=TRUE,sep=";", na = "unknown")
+#View(bank_DS)
+#nrow(bank_DS) # original 41188
+#str(bank_DS)
+#summary(bank_DS)
+
+# Variáveis numéricas: Age, campaing, pdays, previous, em.var.rate, cons.price.idx, cons.conf.idx,euribor3m,nr.employed
+# Variáveis Categóricas: Job, Marital, education, default, housing,loan,contact, month, day_of_week, poutcome
+# Target: Y
+
+# Transformações 
+#NA = unknown retirados
+bank_DS <- na.omit(bank_DS)
+#nrow(bank_DS) #30488 restaram
+
+#Retirada variável duration: Esse atributo afeta muito a meta de saída (por exemplo, se duration = 0, então y = "no").
+bank_DS <- bank_DS[,-11]
+
+#Retirada das variáveis de contexto sócio econômicos?
+
+#Discretização de variáveis numéricas em categóricas para os modelos Árvore de Decisão e RandomForest
+
+#Transformação dos valores categóricos em numéricos para o caso do KNN
+bank_DS <- cbind(bank_DS,dummy(bank_DS$job))
+bank_DS <- bank_DS[,-2]
+bank_DS <- cbind(bank_DS,dummy(bank_DS$marital))
+bank_DS <- cbind(bank_DS,dummy(bank_DS$marital))
+View(bank_DS)
+
+
+
+
