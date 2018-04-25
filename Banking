@@ -22,19 +22,10 @@ bank_DS <-read.table("C:/Users/Lygia/Downloads/bank_dataset/bank-additional-full
 # Target: Y
 
 # Transformações 
-#NA = unknown retirados
+#NA = unknown retirados #30488 restaram
 bank_DS <- na.omit(bank_DS)
-#nrow(bank_DS) #30488 restaram
 
-#Retirada variável duration: Esse atributo afeta muito a meta de saída (por exemplo, se duration = 0, então y = "no").
-bank_DS <- bank_DS[,-11]
-#verificar a correlação
-
-#Retirada das variáveis de contexto sócio econômicos?
-
-#Discretização de variáveis numéricas em categóricas para os modelos Árvore de Decisão e RandomForest
-
-#Transformação dos valores categóricos em numéricos para o caso do KNN
+#Transformação dos valores categóricos em numéricos para o kNN
 bank_DS <- cbind(bank_DS,dummy(bank_DS$job))
 bank_DS <- cbind(bank_DS,dummy(bank_DS$marital))
 bank_DS <- cbind(bank_DS,dummy(bank_DS$education))
@@ -45,12 +36,25 @@ bank_DS <- cbind(bank_DS,dummy(bank_DS$contact))
 bank_DS <- cbind(bank_DS,dummy(bank_DS$month))
 bank_DS <- cbind(bank_DS,dummy(bank_DS$day_of_week))
 bank_DS <- cbind(bank_DS,dummy(bank_DS$poutcome))
-View(bank_DS)
+
+bank_DS$y <- as.numeric(bank_DS$y)
+bank_DS$y <-ifelse(bank_DS$y == 1,0,1)
+
 #Retirada das variáveis originais categóricas
 bank_DS <- bank_DS[,-(2:10)]
-bank_DS <- bank_DS[,-5]
-#bank_DS <- bank_DS[,-(6:10)]
+bank_DS <- bank_DS[,-6]
+bank_DS <- bank_DS[,-(6:10)]
 View(bank_DS)
+
+normalize <- function(x) {
+       num <- x - min(x)
+       denom <- max(x) - min(x)
+       return (num/denom)
+}
+bank_DS$Age <- lapply(bank_DS[,1], normalize)
+
+bank_DS <-lapply(bank_DS, normalize)
+summary(bank_DS)
 
 #KNN K = 2
 L <- sample(1:nrow(bank_DS),round(nrow(bank_DS)/3))
