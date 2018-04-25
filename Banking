@@ -7,6 +7,11 @@
 library(readr)
 library(dummies)
 library(class)
+library(ggplot2)
+library(party)
+library(e1071)
+install.packages("ROCR")
+library(ROCR)
 set.seed(1984)
 
 #********************************KNN*****************************************
@@ -20,6 +25,11 @@ bank_DS <-read.table("C:/Users/Lygia/Downloads/bank_dataset/bank-additional-full
 # Variáveis numéricas: Age, campaing, pdays, previous, em.var.rate, cons.price.idx, cons.conf.idx,euribor3m,nr.employed
 # Variáveis Categóricas: Job, Marital, education, default, housing,loan,contact, month, day_of_week, poutcome
 # Target: Y
+
+ggplot(bank_DS_teste) + geom_bar(aes(x = y), stat = "count",
+                                 fill = "wheat", color = "black") +
+  labs(title = "Depósito a Termo Contratado? No/Yes", y = "Contagem")
+table(bank_DS_teste$y)
 
 # Transformações 
 #NA = unknown retirados #30488 restaram
@@ -39,11 +49,12 @@ bank_DS <- cbind(bank_DS,dummy(bank_DS$poutcome))
 
 bank_DS$y <- as.numeric(bank_DS$y)
 bank_DS$y <-ifelse(bank_DS$y == 1,0,1)
-
+View(bank_DS)
 #Retirada das variáveis originais categóricas
 bank_DS <- bank_DS[,-(2:10)]
 bank_DS <- bank_DS[,-6]
-bank_DS <- bank_DS[,-(6:10)]
+#Retirada das variáveis de contexto social
+bank_DS <- bank_DS[,-c(6:10)]
 View(bank_DS)
 
 normalize <- function(x) {
@@ -51,80 +62,92 @@ normalize <- function(x) {
        denom <- max(x) - min(x)
        return (num/denom)
 }
-bank_DS$Age <- lapply(bank_DS[,1], normalize)
+bank_DS_normalize <- as.data.frame(lapply(bank_DS[,1:5], normalize))
+bank_DS <-cbind(bank_DS,bank_DS_normalize)
+bank_DS <- bank_DS[,-c(1:5)]
+View(bank_DS)
 
-bank_DS <-lapply(bank_DS, normalize)
-summary(bank_DS)
+#Estudo aponta que esta variável duration deve ser retirada, pois se duration = 0, y=0
+#A covariância é baixa e só existem 4 casos de duration =0 e y = 0
+cov(bank_DS$y,bank_DS$duration)
+par(mfrow=c(1,2))
+with(bank_DS, plot(bank_DS$duration,bank_DS$y))
+
+#Verificação da covariância de todas as variáveis com a variável resposta
+for(i in 1:ncol(bank_DS))
+  ifelse (cov(bank_DS$y,bank_DS[,i]) >0.7, print (colnames(bank_DS[,i])),print(0)) 
+
 
 #KNN K = 2
 L <- sample(1:nrow(bank_DS),round(nrow(bank_DS)/3))
-train <- bank_DS[-L,-10]
-test <- bank_DS[L,-10]
-test_y <-bank_DS[L,]
-cl <- factor(bank_DS[-L,10])
+train <- bank_DS[-L,2:53]
+test <- bank_DS[L,2:53]
+test_y <-bank_DS[L,1]
+
+cl <- factor(bank_DS[-L,1])
 fit_k2 <- knn(train, test, cl, k = 2)
-result_k2 = table(fit_k2,test_y$y)
+result_k2 = table(fit_k2,test_y)
 print(result_k2)
 acertos_k2 = (sum(diag(result_k2))/sum(result_k2)*100)
 cat("percentual de acerto: ", acertos_k2, '%')
 
 #KNN K = 3
 fit_k3 <- knn(train, test, cl, k = 3)
-result_k3 = table(fit_k3,test_y$y)
+result_k3 = table(fit_k3,test_y)
 print(result_k3)
 acertos_k3 = (sum(diag(result_k3))/sum(result_k3)*100)
 
 #KNN K = 4
 fit_k4 <- knn(train, test, cl, k = 4)
-result_k4 = table(fit_k4,test_y$y)
+result_k4 = table(fit_k4,test_y)
 print(result_k4)
 acertos_k4 = (sum(diag(result_k4))/sum(result_k4)*100)
 
 #KNN K = 5
 fit_k5 <- knn(train, test, cl, k = 5)
-result_k5 = table(fit_k5,test_y$y)
+result_k5 = table(fit_k5,test_y)
 print(result_k5)
 acertos_k5 = (sum(diag(result_k5))/sum(result_k5)*100)
 
 #KNN K = 7
 fit_k7 <- knn(train, test, cl, k = 7)
-result_k7 = table(fit_k7,test_y$y)
+result_k7 = table(fit_k7,test_y)
 print(result_k7)
 acertos_k7 = (sum(diag(result_k7))/sum(result_k7)*100)
 
 #KNN K = 10
 fit_k10 <- knn(train, test, cl, k = 10)
-result_k10 = table(fit_k10,test_y$y)
+result_k10 = table(fit_k10,test_y)
 print(result_k10)
 acertos_k10 = (sum(diag(result_k10))/sum(result_k10)*100)
 
 #KNN K = 15
 fit_k15 <- knn(train, test, cl, k = 15)
-result_k15 = table(fit_k15,test_y$y)
+result_k15 = table(fit_k15,test_y)
 print(result_k15)
 acertos_k15 = (sum(diag(result_k15))/sum(result_k15)*100)
 
 #KNN K = 30
 fit_k30 <- knn(train, test, cl, k = 30)
-result_k30 = table(fit_k30,test_y$y)
+result_k30 = table(fit_k30,test_y)
 print(result_k30)
 acertos_k30 = (sum(diag(result_k30))/sum(result_k30)*100)
 
 #KNN K = 35
 fit_k35 <- knn(train, test, cl, k = 35)
-result_k35 = table(fit_k35,test_y$y)
+result_k35 = table(fit_k35,test_y)
 print(result_k35)
 acertos_k35 = (sum(diag(result_k35))/sum(result_k35)*100)
 
 #KNN K = 45
 fit_k45 <- knn(train, test, cl, k = 45)
-result_k45 = table(fit_k45,test_y$y)
+result_k45 = table(fit_k45,test_y)
 print(result_k45)
 acertos_k45 = (sum(diag(result_k45))/sum(result_k45)*100)
 
 #KNN K = 50
 fit_k50 <- knn(train, test, cl, k = 50)
-result_k50 = table(fit_k50,test_y$y)
+result_k50 = table(fit_k50,test_y)
 print(result_k50)
 acertos_k50 = (sum(diag(result_k50))/sum(result_k50)*100)
 
@@ -140,6 +163,18 @@ cat("percentual de acerto k=35: ", acertos_k35, '%')
 cat("percentual de acerto k=45: ", acertos_k45, '%')
 cat("percentual de acerto k=50: ", acertos_k50, '%')
 
+k <-c(2,3,4,5,7,10,15,30,35,45,50)
+acertos <- c(acertos_k2,acertos_k3,acertos_k4,acertos_k5,acertos_k7,acertos_k10,acertos_k15,acertos_k30,acertos_k35, acertos_k45,acertos_k50)
+plot(acertos~k)
+
+#******************************KNN COM PCA**************************
+bank_pca <- prcomp(bank_DS[,2:53], center = TRUE, scale = TRUE) 
+round(cov(bank_pca$x),digits=3)
+summary(bank_pca)
+
+bank_pca_test <- data.frame(bank_pca$x[T,"PC1"]) 
+bank_pca_train <- data.frame(bank_pca$x[-T,"PC1"])
+
 #******************************ARVORE DE DECISAO**************************
 
 bank_DS_DT <-read.table("C:/Users/Lygia/Downloads/bank_dataset/bank-additional-full.csv",header=TRUE,sep=";", na = "unknown")
@@ -153,10 +188,6 @@ bank_DS_DT <-read.table("C:/Users/Lygia/Downloads/bank_dataset/bank-additional-f
 bank_DS_DT <- na.omit(bank_DS_DT)
 #nrow(bank_DS) #30488 restaram
 
-#Retirada variável duration: Esse atributo afeta muito a meta de saída (por exemplo, se duration = 0, então y = "no").
-bank_DS_DT <- bank_DS_DT[,-11]
-
-
 #Discretização de variáveis numéricas em categóricas para os modelos Árvore de Decisão e RandomForest
 # Variáveis numéricas: Age, campaing, pdays, previous, em.var.rate, cons.price.idx, cons.conf.idx,euribor3m,nr.employed
 
@@ -168,12 +199,12 @@ summary(bank_DS_DT$campaign)
 campaing_discrete = cut(bank_DS_DT$campaign, 3, include.lowest = TRUE, labels = c("Pouco","Medio","Muito"))
 bank_DS_DT <-cbind(bank_DS_DT, campaing_discrete)
 
+summary(bank_DS_DT$duration)
+duration_discrete = cut(bank_DS_DT$duration, 3, include.lowest = TRUE, labels = c("Curta","Media","Longa"))
+bank_DS_DT <-cbind(bank_DS_DT, duration_discrete)
+
 #numeric; 999 means client was not previously contacted
-#Criada uma variável categória para contatado sim ou não
 table(bank_DS_DT$pdays)
-bank_DS_DT$contacted[bank_DS_DT$pdays == 999] <- "No"
-bank_DS_DT$contacted[bank_DS_DT$pdays != 999] <- "Yes"
-bank_DS_DT$contacted = factor(bank_DS_DT$contacted, levels = c("No","Yes"))
 pdays_discrete <- cut(bank_DS_DT$pdays, 4, include.lowest = TRUE, labels=c("Ate5","Ate15","NaoContatado"),breaks=c(5,15,27,999))
 bank_DS_DT <-cbind(bank_DS_DT, pdays_discrete)
 
@@ -182,12 +213,12 @@ previous_discrete = cut(bank_DS_DT$previous, 3, include.lowest = TRUE, labels = 
 bank_DS_DT <-cbind(bank_DS_DT, previous_discrete)
 
 View(bank_DS_DT)
-#Retirada das variáveis de contexto sócio econômicos pois não seria possível colocar em levels
+#Retirada das variáveis numéricas
 bank_DS_DT <- bank_DS_DT[,-1]
+bank_DS_DT <- bank_DS_DT[,-10]
 bank_DS_DT <- bank_DS_DT[,-(10:12)]
+#Retirada das variáveis de contexto sócio econômicos pois não seria possível colocar em levels
 bank_DS_DT <- bank_DS_DT[,-(11:15)]
-
-library(party)
 
 L_DT <- sample(1:nrow(bank_DS_DT),round(nrow(bank_DS_DT)/3))
 
@@ -202,18 +233,35 @@ resultado_DT=table(test_DT$y,predict_test_DT)
 print(resultado_DT)
 cat('Accuracy: ', sum(diag(resultado_DT))/sum(resultado_DT)*100, ' %')
 
-
 #******************************REGRESSAO LOGÍSTICA**************************
-#Utilizar mesmo conjunto de variáveis categóricas da árvore de decisão
-summary(bank_DS_DT)
-fit_reg=glm(y~.,data=train_DT,family=binomial("logit"))
 
+fit_reg=glm(y~.,data=train_DT,family=binomial("logit"))
+summary(fit_reg)
 predict_reg = predict(fit_reg, newdata=test_DT, type="response")>0.5
 resultado_reg=table(test_DT$y,predict_reg)
 cat('Accuracy Regressão Logística: ', sum(diag(resultado_reg))/sum(resultado_reg)*100, ' %')
 
+# ROC curve
+pr=prediction(as.numeric(predict_reg),as.numeric(test_DT$y)) 
+prf=performance(pr, measure="tpr", x.measure="fpr")
+plot(prf ,colorize=TRUE)
 
-#RESUMO DOS 3 MODELOS
-cat("Accuracy KNN k=35: ", acertos_k35, '%')
+auc=performance(pr, measure="auc")
+auc=auc@y.values[[1]]
+auc 
+
+#******************************NAIVE****************************************
+
+fit_naive = naiveBayes(y~.,data=train_DT,laplace=1)
+predict_naive = predict(fit_naive, newdata=test_DT)
+resultado_naive=table(test_DT$y,predict_naive)
+print(resultado_naive)
+cat('Accuracy resultado_naive: ', sum(diag(resultado_naive))/sum(resultado_naive)*100, ' %')
+
+
+#RESUMO DOS 4 MODELOS
+cat("Accuracy KNN k=30: ", acertos_k30, '%')
 cat('Accuracy Arvore de Decisão: ', sum(diag(resultado_DT))/sum(resultado_DT)*100, ' %')
 cat('Accuracy Regressão Logística: ', sum(diag(resultado_reg))/sum(resultado_reg)*100, ' %')
+cat('Accuracy resultado_naive: ', sum(diag(resultado_naive))/sum(resultado_naive)*100, ' %')
+
